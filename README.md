@@ -4,7 +4,7 @@ This is a very basic scaffold project for you to work in for the connection pool
 
 ## Instructions
 
-Please deliver your solution in an archive format of your choice, including all project files, within 1 calendar week.
+Please deliver your solution via pull request or an archive format of your choice, including all project files, within 1 calendar week.
 
 Write a connection pool class that implements this interface (it is also located in `src/main/java/com/opower/connectionpool/ConnectionPool.java`):
 
