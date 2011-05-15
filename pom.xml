@@ -6,6 +6,10 @@
     <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
     <name>OPOWER Connection Pool Homework</name>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
