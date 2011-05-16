@@ -69,8 +69,7 @@ class ConnectionPoolSpec extends FeatureSpec with GivenWhenThen with MustMatcher
 
       given("a connection pool of a given size")
       val size = 20
-      val ds = getMockDataSource
-      val cp = new SimpleConnectionPool(ds, size)
+      val cp = new SimpleConnectionPool(getMockDataSource, size)
 
       when("when I ask for as many connections as its size")
       1 to size foreach { _ => cp.getConnection }
@@ -96,6 +95,17 @@ class ConnectionPoolSpec extends FeatureSpec with GivenWhenThen with MustMatcher
       1 to size foreach { _ => cp.getConnection }
       then("and no new connections were created")
       there was size.times(ds).getConnection
+    }
+
+    scenario("a pool will only accept returns of pooled connections") {
+      given("a connection pool")
+      val cp = new SimpleConnectionPool(getMockDataSource)
+
+      when("when I return a generic non-pooled connection")
+      val genericConn = mock[Connection]
+    
+      then("Exception should be thrown")
+      evaluating { cp.releaseConnection(genericConn) } must produce [Exception]
     }
 
   }
