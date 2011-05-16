@@ -108,6 +108,17 @@ class ConnectionPoolSpec extends FeatureSpec with GivenWhenThen with MustMatcher
       evaluating { cp.releaseConnection(genericConn) } must produce [Exception]
     }
 
+    scenario("a pool will not accept returns of connections created by another pool") {
+      given("a connection pool")
+      val cp = new SimpleConnectionPool(getMockDataSource)
+
+      when("when I return connections created by another pool")
+      val otherPoolConn = (new SimpleConnectionPool(getMockDataSource)).getConnection
+    
+      then("Exceptions should be thrown")
+      evaluating { cp.releaseConnection(otherPoolConn) } must produce [Exception]
+    }
+
   }
 }
 

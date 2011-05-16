@@ -9,7 +9,7 @@ class SimpleConnectionPool(val ds: DataSource, val size: Int = 10) extends Conne
 
   private val availableConnectionPool = new Queue[Connection]
   (1 to size) foreach {_ => 
-    availableConnectionPool.enqueue(new PooledConnection(ds.getConnection))
+    availableConnectionPool.enqueue(new PooledConnection(ds.getConnection, this))
   }
 
   def getConnection(): Connection = {
