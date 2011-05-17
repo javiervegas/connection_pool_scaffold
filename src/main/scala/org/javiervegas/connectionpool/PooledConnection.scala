@@ -1,5 +1,6 @@
-package com.opower.connectionpool
+package org.javiervegas.connectionpool
 
+import com.opower.connectionpool.ConnectionPool
 import java.sql.Connection
 import org.apache.openjpa.lib.jdbc._;
 
