@@ -12,7 +12,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.MustMatchers
 import org.specs.mock.Mockito
 import org.specs.specification._
-
+import scala.concurrent.ops._
 
 @RunWith(classOf[JUnitRunner])
 class ConnectionPoolSpec extends FeatureSpec with GivenWhenThen with MustMatchers with Mockito with DefaultExampleExpectationsListener {
@@ -121,7 +121,7 @@ class ConnectionPoolSpec extends FeatureSpec with GivenWhenThen with MustMatcher
       when("when I ask for as many connections as its size")
       val conns = 1 to size map { _ => cp.getConnection }
       and("I ask for another connection")
-	  new Thread { cp.getConnection() }
+	  spawn { cp.getConnection() }
       and("I release the open connections within the timeout")
 	  conns foreach { conn => cp.releaseConnection(conn) }
     
