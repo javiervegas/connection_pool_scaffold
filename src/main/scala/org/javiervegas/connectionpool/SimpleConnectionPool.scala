@@ -8,7 +8,7 @@ import java.sql.DriverManager
 import javax.sql.DataSource
 import scala.collection.mutable.Queue
 
-class SimpleConnectionPool(val url: String , val userName: String, val password: String, driver: Driver, val size: Int = 10) extends ConnectionPool {
+class SimpleConnectionPool(val url: String , val userName: String, val password: String, driver: Driver, val size: Int = 10, val timeout: Int = 0) extends ConnectionPool {
   DriverManager.registerDriver(driver)
 
   private val availableConnectionPool = new Queue[Connection]

@@ -29,10 +29,15 @@ class ConnectionPoolSpec extends FeatureSpec with GivenWhenThen with MustMatcher
         md
     }
    
-    def getConnectionPool(driver: Driver = getMockDriver, size: Option[Int] = None) = {
+    def getConnectionPool(driver: Driver = getMockDriver, size: Option[Int] = None, timeout: Option[Int] = None) = {
         size match {
             case None => new SimpleConnectionPool("dummyUrl","dummyUserName","dummyPassword", driver)
-            case Some(s) => new SimpleConnectionPool("dummyUrl","dummyUserName","dummyPassword", driver, s)
+			case Some(s) => {
+				timeout match {
+            		case None => new SimpleConnectionPool("dummyUrl","dummyUserName","dummyPassword", driver, s)
+					case Some(t) => new SimpleConnectionPool("dummyUrl","dummyUserName","dummyPassword", driver, s, t)
+				}
+			}
         }
     }
 
