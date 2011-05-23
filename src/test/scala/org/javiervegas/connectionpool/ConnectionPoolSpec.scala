@@ -120,13 +120,34 @@ class ConnectionPoolSpec extends FeatureSpec with GivenWhenThen with MustMatcher
 
       when("when I ask for as many connections as its size")
       val conns = 1 to size map { _ => cp.getConnection }
-      and("I ask for another connection")
-	  spawn { cp.getConnection() }
+      and("I ask again for as many connections")
+	  1 to size foreach { _ => spawn { cp.getConnection() } }
       and("I release the open connections within the timeout")
+      Thread sleep timeout/2
 	  conns foreach { conn => cp.releaseConnection(conn) }
     
-      then("another connection will be returned")
-      there was (size+1).times(driver).connect(_: String, _: Properties)   
+      then("connections were be returned again")
+      there was (2*size).times(driver).connect(_: String, _: Properties)   
+    }
+
+	scenario("a pool with timeout will not wait more than the timeout") {
+
+      given("a connection pool of a given size and given timeout")
+      val size = 8
+	  val timeout = 500
+      val driver = getMockDriver
+      val cp = getConnectionPool(driver, Some(size), Some(timeout))
+
+      when("when I ask for as many connections as its size")
+      val conns = 1 to size map { _ => cp.getConnection }
+      and("I ask again for as many connections")
+	  1 to size foreach { _ => spawn { cp.getConnection() } }
+      and("I release the open connections after the timeout")
+      Thread sleep 2*timeout
+	  conns foreach { conn => cp.releaseConnection(conn) }
+    
+      then("no more connections were returned after the original ones")
+      there was size.times(driver).connect(_: String, _: Properties)   
     }
 
     scenario("a pool will only accept returns of pooled connections") {
