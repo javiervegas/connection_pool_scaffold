@@ -106,7 +106,25 @@ class ConnectionPoolSpec extends FeatureSpec with GivenWhenThen with MustMatcher
     
       then("I can borrow them again")
       1 to size foreach { _ => cp.getConnection }
-      then("and no new connections were created")
+      and("and no new connections were created")
+      there was size.times(driver).connect(_: String, _: Properties)
+    }
+
+	scenario("closed connections are returned to the  pool") {
+
+      given("a connection pool of a given size")
+      val size = 8
+      val driver = getMockDriver
+      val cp = getConnectionPool(driver, Some(size))
+
+      when("when I retrieve the max number of connections")
+      val conns = 1 to size map { _ => cp.getConnection }
+      and("I close all of them")
+      conns foreach { conn => conn.close }
+    
+      then("I can borrow them again")
+      1 to size foreach { _ => cp.getConnection }
+      and("and no new connections were created")
       there was size.times(driver).connect(_: String, _: Properties)
     }
 
