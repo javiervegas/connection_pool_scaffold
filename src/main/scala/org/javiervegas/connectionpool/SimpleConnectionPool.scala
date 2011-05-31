@@ -39,15 +39,19 @@ class SimpleConnectionPool(val url: String , val userName: String, val password:
     availableConnections.poll(timeout, TimeUnit.MILLISECONDS) match {
  	  case conn: Connection => conn
       case _ => connectionReferenceQueue.poll match {
-        case ref: Some[Reference[Connection]] => ref.get.get match {
- 	        case conn: Some[Connection] => conn.get
-            case None => { 
-                  addNewConnection
-                  getConnection
-            }
-        }
+        case ref: Some[Reference[Connection]] => recoverOrCreate(ref.get)
         case None => throw new SQLException(SimpleConnectionPool.PoolDepleted)
       }  
+    }
+  }
+
+  def recoverOrCreate(ref: Reference[Connection]) = {      
+    ref.get match {
+ 	  case conn: Some[Connection] => conn.get
+      case None => { 
+        addNewConnection
+        getConnection
+      }
     }
   }
 
