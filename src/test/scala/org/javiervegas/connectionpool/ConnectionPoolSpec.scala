@@ -128,6 +128,27 @@ class ConnectionPoolSpec extends FeatureSpec with GivenWhenThen with MustMatcher
       there was size.times(driver).connect(_: String, _: Properties)
     }
 
+	scenario("out of scope connections are returned to the  pool") {
+
+      given("a connection pool of a given size")
+      val size = 8
+      val driver = getMockDriver
+      val cp = getConnectionPool(driver, Some(size))
+
+      when("when I retrieve all connections")
+      var conns = 1 to size map { _ => cp.getConnection }
+      and("I dereference them")
+      conns = null
+      and("and I collect the garbage")
+      System.gc
+      Thread.sleep(1000)
+    
+      then("I can borrow them again")
+      conns = 1 to size map { _ => cp.getConnection }
+      and("I can not borrow any more connections")
+      evaluating { cp.getConnection() } must produce [SQLException]
+    }
+
 	scenario("a pool with timeout will wait when I ask for more connections than its size, in case connections become available") {
 
       given("a connection pool of a given size and given timeout")

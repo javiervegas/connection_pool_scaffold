@@ -6,19 +6,29 @@ import java.sql.SQLException
 import java.sql.Driver
 import java.sql.DriverManager
 import java.util.concurrent.ArrayBlockingQueue
+import scala.collection.mutable.HashSet
 import java.util.concurrent.TimeUnit
-import javax.sql.DataSource
+import scala.ref._
 
 class SimpleConnectionPool(val url: String , val userName: String, val password: String, driver: Driver, val size: Int = 10, val timeout: Int = 0) extends ConnectionPool {
   DriverManager.registerDriver(driver)
 
-  private val availableConnectionPool = new ArrayBlockingQueue[Connection](size)
+  private val availableConnections = new ArrayBlockingQueue[Connection](size)
+  private val connectionReferences = new HashSet[Reference[Connection]]
+  private val connectionReferenceQueue = new ReferenceQueue[Connection]
+
   (1 to size) foreach {_ => 
-    availableConnectionPool.add(new PooledConnection(createConnection, this))
+    addNewConnection
   }
 
   def this(url: String, userName: String, password: String, driverName: String, size: Int) {
     this(url, userName, password, Class.forName(driverName).newInstance.asInstanceOf[Driver], size)
+  }
+
+  def addNewConnection = { 
+    val conn = new PooledConnection(createConnection, this)
+    availableConnections.add(conn)
+    connectionReferences.add(new WeakReference(conn, connectionReferenceQueue))
   }
 
   private def createConnection = {
@@ -26,16 +36,31 @@ class SimpleConnectionPool(val url: String , val userName: String, val password:
   }
 
   def getConnection(): Connection = {
-    availableConnectionPool.poll(timeout, TimeUnit.MILLISECONDS) match {
+    availableConnections.poll(timeout, TimeUnit.MILLISECONDS) match {
  	  case conn: Connection => conn
-      case _ => throw new SQLException
+      case _ => connectionReferenceQueue.poll match {
+        case ref: Some[Reference[Connection]] => ref.get.get match {
+ 	        case conn: Some[Connection] => conn.get
+            case None => { 
+                  addNewConnection
+                  getConnection
+            }
+        }
+        case None => throw new SQLException(SimpleConnectionPool.PoolDepleted)
+      }  
     }
   }
 
   def releaseConnection(conn: Connection): Unit = {
     conn match {
-      case conn: PooledConnection if conn.cp == this => availableConnectionPool.offer(conn)
-      case _ => throw new RuntimeException
+      case conn: PooledConnection if conn.cp == this =>  availableConnections.offer(conn)
+      case _ => throw new RuntimeException(SimpleConnectionPool.UnknownConnection)
     }
   }
+
+}
+
+object SimpleConnectionPool {
+	val PoolDepleted = "ConnectionPool depleted"
+    val UnknownConnection = "Connection was not created by this pool, it can not be released"
 }
